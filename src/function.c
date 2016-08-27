@@ -41,8 +41,8 @@ function* init_function (function* to_init, unsigned int start_addr, unsigned in
 
 	//Split jump blocks 
 	struct search_params params;
-	int i;
 
+	int i;
 	for (i = 0; i < to_init->num_jump_addrs; i ++)
 	{
 		current = NULL;
@@ -52,7 +52,7 @@ function* init_function (function* to_init, unsigned int start_addr, unsigned in
 	
 		if (!current)
 		{
-			printf ("Error: invalid jump instruction at %p\n", to_init->orig_addrs [i]);
+			printf ("Error: invalid jump instruction at %p\n", (void *)(long)(to_init->orig_addrs [i]));
 			continue;
 		}
 	
@@ -69,7 +69,6 @@ function* init_function (function* to_init, unsigned int start_addr, unsigned in
 
 void resolve_jumps (jump_block* to_resolve, function* benefactor)
 {
-	int addr_temp;
 	if (to_resolve->instructions [to_resolve->num_instructions-1].mnemonic [0] == 'j')
 	{
 		benefactor->num_jump_addrs ++;
@@ -105,28 +104,34 @@ void function_list_cleanup (function* to_cleanup, char scrub_insn)
 void search_func_start_addrs (function* to_test, struct search_params arg)
 {
 	if (to_test->start_addr == arg.key)
+	{
 		*(char*)(arg.ret) = 1;
+	}
 }
 
 //Helper function for resolve calls (callback for list_loop)
 void resolve_calls_help (jump_block* benefactor, function* parent)
 {
 	struct search_params arg;
-	int i = 0;
 	char ret = 0;
 	arg.ret = (void**)&ret;
 	function* to_link;
 
-	for (i; i < benefactor->num_calls; i ++)
+	int i;
+	for (i = 0; i < benefactor->num_calls; i ++)
 	{
 		arg.key = benefactor->calls [i];
 		list_loop (search_func_start_addrs, parent, parent, arg);
 		if (!ret && addr_to_index (arg.key) < file_size && !find_reloc_sym (*(int*)&(file_buf [addr_to_index (arg.key)+2])))
 		{
 			if (benefactor->calls [i] < text_addr) //Likely a reference to plt, data isn't in this file so don't bother
+			{
 				continue;
+			}
 			if (addr_to_index (benefactor->calls [i]) >= file_size) //Critical error: should not call outside of address space
+			{
 				continue;
+			}
 			to_link = init_function (malloc (sizeof (function)), benefactor->calls [i], parent->stop_addr);
 			link (parent, to_link);
 		}
@@ -149,25 +154,29 @@ void resolve_calls (function* benefactor)
 void split_jump_blocks (jump_block* to_split, unsigned int addr, unsigned int stop_addr)
 {
 	if (to_split->start == addr)
+	{
 		return;
+	}
 	jump_block* new_block;
-	int i = 0;
-	int j;
 	unsigned int flags = to_split->flags;
-	cs_insn* split_instruction;
+
+	int i = 0;
 	while (to_split->instructions [i].address + to_split->start != addr && i < to_split->num_instructions)
 		i ++;
 
 	if (i >= to_split->num_instructions)
 	{
-		printf ("Error: jump into instruction at %p\n", addr);
+		printf ("Error: jump into instruction at %p\n", (void *)(long)addr);
 		return;
 	}
 
 	new_block = init_jump_block (malloc (sizeof (jump_block)), to_split->instructions [i].address + to_split->start, stop_addr);
 
+	int j;
 	for (j = i; j < to_split->num_instructions; j ++)
+	{
 		free (to_split->instructions [j].detail);
+	}
 	
 	to_split->num_instructions = i;
 	to_split->end = new_block->start;

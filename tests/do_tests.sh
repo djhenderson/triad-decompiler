@@ -2,6 +2,8 @@
 
 cd tests
 
+rm -f *t_trial
+
 triad arith_test > arith_test_trial
 triad control_flow_test > control_flow_test_trial
 triad ./test > test_trial

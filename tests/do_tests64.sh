@@ -2,6 +2,8 @@
 
 cd tests
 
+rm -f *t64_trial
+
 triad arith_test64 > arith_test64_trial
 triad control_flow_test64 > control_flow_test64_trial
 triad ./test64 > test64_trial

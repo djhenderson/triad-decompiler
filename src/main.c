@@ -51,23 +51,31 @@ int main (int argc, char** argv)
 			}
 		}
 		else if (file_name == NULL)
+		{
 			file_name = argv [i];
+		}
 		else if (beginning_address_string == NULL)
+		{
 			beginning_address_string = argv [i];
+		}
 		else if (cutoff_address_string == NULL)
+		{
 			cutoff_address_string = argv [i];
+		}
 		else
 		{
 			printf ("Unrecognized option \"%s\"\n", argv [i]);
 			exit (-1);
 		}
 	}
-					
+
 
 	unsigned int beginning_address;
-	function* func;
+	function* func = 0;
 	if (beginning_address_string == NULL)
+	{
 		parse_elf (file_name);
+	}
 
 	if (beginning_address_string)
 	{
@@ -92,14 +100,22 @@ int main (int argc, char** argv)
 		beginning_address = strtoul (beginning_address_string, NULL, 16);
 
 		if (cutoff_address_string)
+		{
 			stop_addr = strtoul (cutoff_address_string, NULL, 16);
+		}
 		else
+		{
 			stop_addr = end_of_text;
+		}
 
 		if (beginning_address)
+		{
 			func = init_function (malloc (sizeof (function)), beginning_address, stop_addr);
+		}
 		else
+		{
 			printf ("Error: invalid start address\n");
+		}
 	}
 	else if (main_addr)
 	{
@@ -123,9 +139,13 @@ int main (int argc, char** argv)
 		cs_option (handle, CS_OPT_DETAIL, CS_OPT_ON);
 
 		if (cutoff_address_string)
+		{
 			stop_addr = strtoul (cutoff_address_string, NULL, 16);
+		}
 		else
+		{
 			stop_addr = end_of_text;
+		}
 
 		func = init_function (malloc (sizeof (function)), main_addr, stop_addr);
 	}
@@ -136,7 +156,9 @@ int main (int argc, char** argv)
 	}
 	func->next = NULL;
 	if (follow_calls)
+	{
 		resolve_calls (func);
+	}
 	translate_function_list (func);
 
 	function_list_cleanup (func, 1); //Make sure those operands don't leak

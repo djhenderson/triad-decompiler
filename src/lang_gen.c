@@ -12,12 +12,12 @@ void disassemble_insn (cs_insn instruction, jump_block* parent)
 {
 	unsigned int target_addr;
 
-	printf ("%p:", instruction.address + parent->start);
+	printf ("%p:", (void *)(instruction.address + parent->start));
 
 	if ((instruction.id >= X86_INS_JAE && instruction.id <= X86_INS_JS) || instruction.id == X86_INS_CALL)
 	{
 		target_addr = relative_insn (&instruction, instruction.address + instruction.size + parent->start);
-		printf ("\t%s\t%p\n", instruction.mnemonic, target_addr);
+		printf ("\t%s\t%p\n", instruction.mnemonic, (void *)(unsigned long)target_addr);
 	}
 	else
 		printf ("\t%s\t%s\n", instruction.mnemonic, instruction.op_str);
@@ -59,24 +59,40 @@ void decompile_insn (cs_insn instruction, cs_insn next_instruction, jump_block* 
 					if (constant_format [1] == 'd')
 					{
 						if (temp->type != DEREF && temp2->type != DEREF)
+						{
 							sprintf (line, "%s = %s;\n", temp->name, temp2->name);
+						} 
 						else if (temp->type == DEREF && temp2->type != DEREF)
+						{
 							sprintf (line, "*(%s*)(%s+(%d)) = %s;\n", temp->c_type, temp->name, temp->loc.disp, temp2->name);
+						} 
 						else if (temp->type != DEREF && temp2->type == DEREF)
+						{
 							sprintf (line, "%s = *(%s*)(%s+(%d));\n", temp->name, temp2->c_type, temp2->name, temp2->loc.disp);
+						} 
 						else
+						{
 							sprintf (line, "*(%s*)(%s+(%d)) = *(%s*)(%s+(%d))", temp->c_type, temp->name, temp->loc.disp, temp2->c_type, temp2->name, temp2->loc.disp);
+						}
 					}
 					else
 					{
 						if (temp->type != DEREF && temp2->type != DEREF)
+						{
 							sprintf (line, "%s = %s;\n", temp->name, temp2->name);
+						} 
 						else if (temp->type == DEREF && temp2->type != DEREF)
-							sprintf (line, "*(%s*)(%s+(%p)) = %s;\n", temp->c_type, temp->name, temp->loc.disp, temp2->name);
+						{
+							sprintf (line, "*(%s*)(%s+(%p)) = %s;\n", temp->c_type, temp->name, (void *)(unsigned long)temp->loc.disp, temp2->name);
+						} 
 						else if (temp->type != DEREF && temp2->type == DEREF)
-							sprintf (line, "%s = *(%s*)(%s+(%p));\n", temp->name, temp2->c_type, temp2->name, temp2->loc.disp);
+						{
+							sprintf (line, "%s = *(%s*)(%s+(%p));\n", temp->name, temp2->c_type, temp2->name, (void *)(unsigned long)temp2->loc.disp);
+						} 
 						else
-							sprintf (line, "*(%s*)(%s+(%p)) = *(%s*)(%s+(%p))", temp->c_type, temp->name, temp->loc.disp, temp2->c_type, temp2->name, temp2->loc.disp);
+						{
+							sprintf (line, "*(%s*)(%s+(%p)) = *(%s*)(%s+(%p))", temp->c_type, temp->name, (void *)(unsigned long)temp->loc.disp, temp2->c_type, temp2->name, (void *)(unsigned long)temp2->loc.disp);
+						}
 					}
 				}
 				else
@@ -240,7 +256,7 @@ void decompile_insn (cs_insn instruction, cs_insn next_instruction, jump_block* 
 					sprintf (line, "eax = %s (", name_string);
 				}
 				else
-					sprintf (line, "eax = func_%p (", target_addr);
+					sprintf (line, "eax = func_%p (", (void *)(unsigned long)target_addr);
 	
 				//Print the argument list
 				if (caller_param)
@@ -337,7 +353,7 @@ void decompile_insn (cs_insn instruction, cs_insn next_instruction, jump_block* 
 				else
 				{
 					target_addr = relative_insn (&instruction, instruction.address + instruction.size + parent->start);
-					sprintf (line, "%s %p\n", instruction.mnemonic, target_addr);
+					sprintf (line, "%s %p\n", instruction.mnemonic, (void *)(unsigned long)target_addr);
 				}
 
 				break;
@@ -345,7 +361,7 @@ void decompile_insn (cs_insn instruction, cs_insn next_instruction, jump_block* 
 				if (language_flag != 'f')
 				{
 					target_addr = relative_insn (&instruction, instruction.address + instruction.size + parent->start);
-					sprintf (line, "%s %p\n", instruction.mnemonic, target_addr);
+					sprintf (line, "%s %p\n", instruction.mnemonic, (void *)(unsigned long)target_addr);
 				}
 				break;
 			case X86_INS_NOP:
@@ -440,7 +456,7 @@ void partial_decompile_jump_block (jump_block* to_translate, function* parent)
 				translation_size  = 2*(len + 12);
 				translation = realloc (translation, translation_size);
 			}
-			sprintf (&(translation [len]), "%p:\n", to_translate->next->start);
+			sprintf (&(translation [len]), "%p:\n", (void *)(unsigned long)to_translate->next->start);
 
 			for (j = 0; j < parent->num_jump_addrs; j ++)
 			{
@@ -679,7 +695,7 @@ void decompile_jump_block (jump_block* to_translate, function* parent)
 			sprintf (&(translation [len]), "\t");
 			len ++;
 		}
-		sprintf (&(translation [len]), "goto %p;\n", target);
+		sprintf (&(translation [len]), "goto %p;\n", (void *)(unsigned long)target);
 	}
 
 	for (i = 0; i < parent->num_jump_addrs; i ++)
@@ -692,7 +708,7 @@ void decompile_jump_block (jump_block* to_translate, function* parent)
 				translation_size  = 2*(len + 12);
 				translation = realloc (translation, translation_size);
 			}
-			sprintf (&(translation [len]), "%p:\n", to_translate->next->start);
+			sprintf (&(translation [len]), "%p:\n", (void *)(unsigned long)to_translate->next->start);
 		}
 	}
 }
@@ -867,11 +883,11 @@ void translate_func (function* to_translate)
 		else
 			func_name64 = find_sym64 (symbol_table.arch2, symbol_table_end.arch2, to_translate->start_addr);
 		if (func_name)
-			printf ("int func_%p (%s)\n{\n", to_translate->start_addr, string_table + func_name->st_name);
+			printf ("int func_%p (%s)\n{\n", (void *)(unsigned long)to_translate->start_addr, string_table + func_name->st_name);
 		else if (func_name64)
-			printf ("int func_%p (%s)\n{\n", to_translate->start_addr, string_table + func_name64->st_name);
+			printf ("int func_%p (%s)\n{\n", (void *)(unsigned long)to_translate->start_addr, string_table + func_name64->st_name);
 		else
-			printf ("int func_%p\n{\n", to_translate->start_addr);
+			printf ("int func_%p\n{\n", (void *)(unsigned long)to_translate->start_addr);
 		list_loop (disassemble_jump_block, to_translate->jump_block_list, to_translate->jump_block_list);
 		printf ("}\n\n");
 	}
@@ -921,7 +937,7 @@ void translate_func (function* to_translate)
 		else if (func_name64)
 			printf ("int %s (", string_table + func_name64->st_name);
 		else
-			printf ("int func_%p (", to_translate->start_addr);
+			printf ("int func_%p (", (void *)(unsigned long)to_translate->start_addr);
 		current_var = callee_param;
 		if (!callee_param)
 			printf ("void)\n{\n");

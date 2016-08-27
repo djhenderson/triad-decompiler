@@ -1,15 +1,18 @@
-mrproper: triad clean
+#PREFIX=/usr
+PREFIX=$(HOME)
+
+mrproper: triad clean 
 debug:
-	make -C src debug
+	$(MAKE) -C src debug
 triad: 
-	make -C src triad
+	$(MAKE) -C src triad
 sys_tests:
-	make -C tests sys_tests && tests/do_tests.sh
+	$(MAKE) -C tests sys_tests && tests/do_tests.sh
 sys_tests64:
-	make -C tests sys_tests64 && tests/do_tests64.sh
+	$(MAKE) -C tests sys_tests64 && tests/do_tests64.sh
 clean:
-	make -C src clean
+	$(MAKE) -C src clean
 clean_tests:
-	make -C tests clean
+	$(MAKE) -C tests clean
 install:
-	install src/triad /usr/bin/triad
+	install src/triad $(HOME)/bin/triad

@@ -62,7 +62,6 @@ void get_num_sections64 (void)
 //Finds information about a number of sections of interest by looping through the section table and looking for specific names
 void parse_sections (void)
 {
-	int loop = 0;
 	unsigned int section_table_index;
 	Elf32_Shdr* section_table;
 	char* current_name;
@@ -75,7 +74,7 @@ void parse_sections (void)
 	section_table_index = ((Elf32_Ehdr*)&(file_buf [0]))->e_shoff;
 	section_table = (Elf32_Shdr*)&(file_buf [section_table_index]);	
 
-	for (loop; loop < num_sections; loop ++)
+	for (int loop = 0; loop < num_sections; loop ++)
 	{
 		current_name = section_string_table + section_table [loop].sh_name;
 		current_offset = section_table [loop].sh_offset;
@@ -111,7 +110,6 @@ void parse_sections (void)
 
 void parse_sections64 (void)
 {
-	int loop = 0;
 	unsigned int section_table_index;
 	Elf64_Shdr* section_table;
 	char* current_name;
@@ -124,7 +122,7 @@ void parse_sections64 (void)
 	section_table_index = ((Elf64_Ehdr*)&(file_buf [0]))->e_shoff;
 	section_table = (Elf64_Shdr*)&(file_buf [section_table_index]);	
 
-	for (loop; loop < num_sections; loop ++)
+	for (int loop = 0; loop < num_sections; loop ++)
 	{
 		current_name = section_string_table + section_table [loop].sh_name;
 		current_offset = section_table [loop].sh_offset;
@@ -161,65 +159,97 @@ void parse_sections64 (void)
 Elf32_Sym* find_sym (Elf32_Sym* sym_tab, Elf32_Sym* end, unsigned int addr)
 {
 	if (!sym_tab)
+	{
 		return NULL;
+	}
 
 	int loop = 0;
 
 	while (sym_tab [loop].st_value != addr && &(sym_tab [loop]) < end)
+	{
 		loop ++;
+	}
 	
 	if (sym_tab [loop].st_info == STT_NOTYPE)
+	{
 		return NULL;
+	}
 	else
+	{
 		return &(sym_tab [loop]);
+	}
 }
 
 Elf64_Sym* find_sym64 (Elf64_Sym* sym_tab, Elf64_Sym* end, unsigned int addr)
 {
 	if (!sym_tab)
+	{
 		return NULL;
+	}
 
 	int loop = 0;
 
 	while (sym_tab [loop].st_value != addr && &(sym_tab [loop]) < end)
+	{
 		loop ++;
+	}
 	
 	if (sym_tab [loop].st_info == STT_NOTYPE)
+	{
 		return NULL;
+	}
 	else
+	{
 		return &(sym_tab [loop]);
+	}
 }
 
 Elf32_Sym* find_reloc_sym (unsigned int addr)
 {
 	if (!relocation_table.arch1 || !dynamic_symbol_table.arch1)
+	{
 		return NULL;
+	}
 
 	int loop = 0;
 
 	while (relocation_table.arch1 [loop].r_offset != addr && loop < num_dynamic_symbols)
+	{
 		loop ++;
+	}
 
 	if (loop >= num_dynamic_symbols)
+	{
 		return NULL;
+	}
 	else
+	{
 		return &(dynamic_symbol_table.arch1 [relocation_table.arch1 [loop].r_info >> 8]);
+	}
 }
 
 Elf64_Sym* find_reloc_sym64 (unsigned int addr)
 {
 	if (!relocation_table.arch2 || !dynamic_symbol_table.arch2)
+	{
 		return NULL;
+	}
 
 	int loop = 0;
 
 	while (relocation_table.arch2 [loop].r_offset != addr && loop < num_dynamic_symbols)
+	{
 		loop ++;
+	}
 
 	if (loop >= num_dynamic_symbols)
+	{
 		return NULL;
+	}
 	else
+	{
 		return &(dynamic_symbol_table.arch2 [relocation_table.arch2 [loop].r_info >> 32]);
+	}
 }
 
 void get_dyn_syms (void)
@@ -227,18 +257,19 @@ void get_dyn_syms (void)
 	Elf32_Ehdr* header = (Elf32_Ehdr*)file_buf;
 	Elf32_Phdr* segment_table = (Elf32_Phdr*)(file_buf + header->e_phoff);
 	Elf32_Dyn* dynamic_table;
-	int i = 0;
-	int j = 0;
 
 	dynamic_string_table = NULL;
 	dynamic_symbol_table.arch1 = NULL;
 	relocation_table.arch1 = NULL;
 	num_dynamic_symbols = 0;
 
-	for (i; i < header->e_phnum; i ++)
+	int i;
+	for (i = 0; i < header->e_phnum; i ++)
 	{
 		if (segment_table [i].p_type == PT_DYNAMIC)
+		{
 			break;
+		}
 	}
 
 	if (i >= header->e_phnum)
@@ -249,19 +280,29 @@ void get_dyn_syms (void)
 
 	dynamic_table = (Elf32_Dyn*)(file_buf + segment_table [i].p_offset);
 
-	j = 0;
+	int j = 0;
 	while (dynamic_table [j].d_tag != DT_NULL)
 	{
 		if (dynamic_table [j].d_tag == DT_STRTAB)
+		{
 			dynamic_string_table = (char*)(file_buf + addr_to_index (dynamic_table [j].d_un.d_ptr));
+		}
 		if (dynamic_table [j].d_tag == DT_SYMTAB)
+		{
 			dynamic_symbol_table.arch1 = (Elf32_Sym*)(file_buf + addr_to_index (dynamic_table [j].d_un.d_ptr));
+		}
 		if (dynamic_table [j].d_tag == DT_RELSZ)
+		{
 			num_dynamic_symbols += dynamic_table [j].d_un.d_val /sizeof (Elf32_Rel);
+		}
 		if (dynamic_table [j].d_tag == DT_PLTRELSZ)
+		{
 			num_dynamic_symbols = dynamic_table [j].d_un.d_val / sizeof (Elf32_Rel);
+		}
 		if (dynamic_table [j].d_tag == DT_REL)
+		{
 			relocation_table.arch1 = (Elf32_Rel*)(file_buf + addr_to_index (dynamic_table [j].d_un.d_ptr));
+		}
 	
 		j ++;
 	}
@@ -272,18 +313,19 @@ void get_dyn_syms64 (void)
 	Elf64_Ehdr* header = (Elf64_Ehdr*)file_buf;
 	Elf64_Phdr* segment_table = (Elf64_Phdr*)(file_buf + header->e_phoff);
 	Elf64_Dyn* dynamic_table;
-	int i = 0;
-	int j = 0;
 
 	dynamic_string_table = NULL;
 	dynamic_symbol_table.arch2 = NULL;
 	relocation_table.arch2 = NULL;
 	num_dynamic_symbols = 0;
 
-	for (i; i < header->e_phnum; i ++)
+	int i;
+	for (i = 0; i < header->e_phnum; i ++)
 	{
 		if (segment_table [i].p_type == PT_DYNAMIC)
+		{
 			break;
+		}
 	}
 
 	if (i >= header->e_phnum)
@@ -294,19 +336,29 @@ void get_dyn_syms64 (void)
 
 	dynamic_table = (Elf64_Dyn*)(file_buf + segment_table [i].p_offset);
 	
-	j = 0;
+	int j = 0;
 	while (dynamic_table [j].d_tag != DT_NULL)
 	{
 		if (dynamic_table [j].d_tag == DT_STRTAB)
+		{
 			dynamic_string_table = (char*)(file_buf + addr_to_index (dynamic_table [j].d_un.d_ptr));
+		}
 		if (dynamic_table [j].d_tag == DT_SYMTAB)
+		{
 			dynamic_symbol_table.arch2 = (Elf64_Sym*)(file_buf + addr_to_index (dynamic_table [j].d_un.d_ptr));
+		}
 		if (dynamic_table [j].d_tag == DT_RELASZ)
+		{
 			num_dynamic_symbols += dynamic_table [j].d_un.d_ptr /sizeof (Elf64_Rela);
+		}
 		if (dynamic_table [j].d_tag == DT_PLTRELSZ)
+		{
 			num_dynamic_symbols = dynamic_table [j].d_un.d_ptr / sizeof (Elf64_Rela);
+		}
 		if (dynamic_table [j].d_tag == DT_RELA)
+		{
 			relocation_table.arch2 = (Elf64_Rela*)(file_buf + addr_to_index (dynamic_table [j].d_un.d_ptr));
+		}
 	
 		j ++;
 	}
@@ -315,7 +367,9 @@ void get_dyn_syms64 (void)
 void find_main (void)
 {
 	if (!symbol_table.arch1 || !string_table)
+	{
 		return;
+	}
 
 	int loop = 0;
 
@@ -337,7 +391,9 @@ void find_main (void)
 void find_main64 (void)
 {
 	if (!symbol_table.arch2 || !string_table)
+	{
 		return;
+	}
 
 	int loop = 0;
 
@@ -373,8 +429,8 @@ void get_text (void)
 	text_addr = entry_point;
 	text_offset = addr_to_index (text_addr);
 	Elf32_Phdr* segment_table = (Elf32_Phdr*)(file_buf + ((Elf32_Ehdr*)file_buf)->e_phoff);
-	int i;
 
+	int i;
 	for (i = 0; i < ((Elf32_Ehdr*)file_buf)->e_phnum; i ++)
 	{
 		if (segment_table [i].p_vaddr <= text_addr && segment_table [i].p_vaddr + segment_table [i].p_memsz > text_addr)
@@ -396,8 +452,8 @@ void get_text64 (void)
 	text_addr = entry_point;
 	text_offset = addr_to_index (text_addr);
 	Elf64_Phdr* segment_table = (Elf64_Phdr*)(file_buf + ((Elf64_Ehdr*)file_buf)->e_phoff);
-	int i;
 
+	int i;
 	for (i = 0; i < ((Elf64_Ehdr*)file_buf)->e_phnum; i ++)
 	{
 		if (segment_table [i].p_vaddr <= text_addr && segment_table [i].p_vaddr + segment_table [i].p_memsz > text_addr)
@@ -455,8 +511,8 @@ void init_elf_parser (char* file_name)
 	else if (architecture == ELFCLASS32)
 	{
 		Elf32_Phdr* program_headers = (Elf32_Phdr*)(file_buf + header->e_phoff);
-		int i;
 
+		int i;
 		for (i = 0; i < header->e_phnum; i ++)
 		{
 			if (program_headers [i].p_type == PT_LOAD)
@@ -484,8 +540,8 @@ void init_elf_parser (char* file_name)
 	else if (architecture == ELFCLASS64)
 	{
 		Elf64_Phdr* program_headers = (Elf64_Phdr*)(file_buf + header64->e_phoff);
-		int i;
 
+		int i;
 		for (i = 0; i < header64->e_phnum; i ++)
 		{
 			if (program_headers [i].p_type == PT_LOAD)
@@ -528,12 +584,17 @@ void parse_elf (char* file_name)
 		parse_sections ();
 		find_main ();
 	}
-	else
+	else if (architecture == ELFCLASS64)
 	{
 		get_num_sections64 ();
 		get_section_names64 ();
 		parse_sections64 ();
 		find_main64 ();
+	}
+	else
+	{
+		printf ("CRITICAL ERROR: Invalid ELF class %d", architecture);
+		exit (-1);
 	}
 }
 
@@ -541,4 +602,5 @@ void elf_parser_cleanup (void)
 {
 	if (file_buf)
 		free (file_buf);
+		file_buf = 0;
 }

@@ -1,4 +1,9 @@
-CFLAGS=-O2
+#PREFIX=/usr
+PREFIX=$(HOME)
+LIBDIR=$(PREFIX)/lib
+INCDIR=$(PREFIX)/include
+CFLAGS=-O2 -Wall -Werror -I$(INCDIR) -L$(LIBDIR)
+
 mrproper: triad clean
 debug: CFLAGS=-g
 debug: triad
@@ -19,4 +24,4 @@ lang_gen.o: lang_gen.c lang_gen.h var.h function.h jump_block.h
 	gcc $(CFLAGS) -c lang_gen.c
 
 clean:
-	rm main.o var.o lang_gen.o jump_block.o elf_parser.o function.o
+	rm -f main.o var.o lang_gen.o jump_block.o elf_parser.o function.o *.bak

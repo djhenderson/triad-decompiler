@@ -1,0 +1,37 @@
+# Object files
+*.o
+*.ko
+
+# Gcc dependency-tracking files
+*.d
+
+# Libraries
+*.lib
+*.a
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+
+# python
+*.pyc
+*.pyo
+
+
+# test output
+tests/*t_trial
+tests/*t64_trial
+
+
+# editor files
+*.swp
+*~
+*.bak
+
+# CMake build directories
+build*/
